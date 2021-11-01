@@ -1,0 +1,16 @@
+*.egg-info
+.cache
+*.pyc
+.coverage
+*/wheelhouse
+*.sql
+env/
+.vscode/
+.idea
+*.iml
+dist/
+build/
+.envrc
+.env
+run
+__pycache__
