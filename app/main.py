@@ -1,13 +1,11 @@
-from typing import List
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
 
-from app.database import create_session
-from app.user import schemas, models
+from app.user import service as user_service
+
 
 app = FastAPI()
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -17,13 +15,9 @@ app.add_middleware(
     allow_credentials=True,
 )
 
+app.include_router(user_service.router)
+
 
 @app.get("/")
 def main():
     return "Hello World!"
-
-
-# @app.get("/users/", response_model=List[schemas.UserSchema])
-# def show_users(db: Session = create_session()):
-#     users = db.query(models.User).all()
-#     return users

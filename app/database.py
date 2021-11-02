@@ -21,6 +21,4 @@ def create_session():
     """Create a sharable db session."""
     engine = db_connect()
     create_all_tables(engine)
-    return scoped_session(
-        sessionmaker(autocommit=True, autoflush=True, bind=engine)
-    )
+    return scoped_session(sessionmaker(autoflush=True, bind=engine))
