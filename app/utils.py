@@ -1,9 +1,16 @@
 import random
 import string
+import datetime
+import jwt
+import logging
 
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 from sqlalchemy.sql.expression import ClauseElement
+from fastapi import HTTPException
 
 from app.exceptions import ValidationFailed
+from app import settings
 
 
 def number_id_generator(
@@ -66,3 +73,53 @@ def load_schema(schema, data, many=None):
         return [schema.Meta.model(**item_data) for item_data in data]
     # pylint: disable=not-callable
     return schema.Meta.model(**data)
+
+
+def hash_password(password):
+    hasher = PasswordHasher()
+    hashed_password = hasher.hash(password)
+    return hashed_password
+
+
+def verify_password(password, hash):
+    hasher = PasswordHasher()
+    try:
+        return hasher.verify(hash, password)
+    except VerifyMismatchError:
+        raise HTTPException(
+            status_code=401,
+            detail="Please enter the correct username and password",
+        )
+
+
+def generate_access_token(payload):
+    now = datetime.datetime.now(datetime.timezone.utc)
+    expiration_time = now + datetime.timedelta(hours=12)
+    payload["exp"] = expiration_time
+    access_token = jwt.encode(
+        payload,
+        settings.JWT_SECRET,
+    )
+    return {
+        "access_token": access_token,
+        "expires_at": expiration_time,
+        "user_id": payload["user_id"],
+        "created_by": "System",
+        "updated_by": "System",
+    }
+
+
+def decode_jwt_token(token):
+    try:
+        decoded = jwt.decode(token, settings.JWT_SECRET)
+        return decoded
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=401,
+            detail="Your access token has expired. Please log in again",
+        )
+    except Exception as exc:
+        logging.exception(f"Decode jwt token error: {exc}")
+        raise HTTPException(
+            status_code=401, detail="Invalid access token. Please log in again"
+        )
