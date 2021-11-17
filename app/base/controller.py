@@ -1,5 +1,5 @@
 from fastapi.encoders import jsonable_encoder
-from fastapi import status
+from fastapi import status, HTTPException
 from typing import List
 
 from app.utils import get_or_create
@@ -38,10 +38,9 @@ class BaseController:
     @classmethod
     def post_record(cls, session, data, response):
         created, item = get_or_create(session, cls.model, cls.schema, data)
-        result: cls.schema = item
         if created:
             response.status_code = status.HTTP_201_CREATED
-        return result
+        return item
 
     @classmethod
     def fetch_records(cls, session, pk=None, response=None):
@@ -56,15 +55,12 @@ class BaseController:
     def fetch_single_record(cls, session, pk, response):
         item = session.query(cls.model).get(pk)
         if item is None or item.deleted_at is not None:
-            response.status_code = status.HTTP_404_NOT_FOUND
-            return {}
+            raise HTTPException(status_code=404, detail="Record not Found")
         return item
 
     @classmethod
     def update_record(cls, session, data, pk, response):
         item = cls.fetch_single_record(session, pk, response)
-        if not item:
-            return "Record not found"
         item.set_model_dict(data)
         item.save(session)
         result: cls.schema = item
@@ -73,7 +69,5 @@ class BaseController:
     @classmethod
     def soft_delete(cls, session, pk, user_id, response):
         item = cls.fetch_single_record(session, pk, response)
-        if not item:
-            return "Record not found"
         item.delete(session, user_id)
         return {"deleted": True}

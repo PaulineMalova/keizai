@@ -8,3 +8,5 @@ DATABASE = {
     "password": config("DB_PASSWORD", "password"),
     "database": config("DB_NAME", "postgres"),
 }
+ACCESS_TOKEN_EXPIRATION = config("ACCESS_TOKEN_EXPIRATION", 12)
+JWT_SECRET = config("JWT_SECRET", "")
