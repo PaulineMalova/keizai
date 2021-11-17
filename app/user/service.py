@@ -1,41 +1,43 @@
+import uuid
+
 from fastapi import APIRouter, Request, Response
 from sqlalchemy.orm import Session
 
 from app.database import create_session
 
-from app.user.schemas import UserSchema, PartialUserSchema, LoginSchema
 from app.user.controllers import UserController, AuthController
+from app.user.input import PartialUserInput, LoginInput
 
 session: Session = create_session()
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(tags=["users"])
 
 
-@router.get("/")
+@router.get("/users")
 def get_users(request: Request):
     result = UserController.as_view(session, request)
     return result
 
 
 @router.post("/register")
-def create_user(user: UserSchema, request: Request, response: Response):
+def create_user(user: PartialUserInput, request: Request, response: Response):
     result = UserController.as_view(
         session, request, item=user, response=response
     )
     return result
 
 
-@router.get("/{user_id}")
-def get_user(request: Request, user_id: str, response: Response):
+@router.get("/users/{user_id}")
+def get_user(request: Request, user_id: uuid.UUID, response: Response):
     result = UserController.as_view(
         session, request, pk=user_id, response=response
     )
     return result
 
 
-@router.put("/{user_id}")
+@router.put("/users/{user_id}")
 def update_user(
-    user: PartialUserSchema, request: Request, user_id: str, response: Response
+    user: PartialUserInput, request: Request, user_id: str, response: Response
 ):
     result = UserController.as_view(
         session, request, user, pk=user_id, response=response
@@ -43,7 +45,7 @@ def update_user(
     return result
 
 
-@router.delete("/{user_id}")
+@router.delete("/users/{user_id}")
 def delete_user(request: Request, user_id: str, response: Response):
     result = UserController.as_view(
         session, request, pk=user_id, response=response
@@ -52,7 +54,7 @@ def delete_user(request: Request, user_id: str, response: Response):
 
 
 @router.post("/login")
-def login(payload: LoginSchema, response: Response):
+def login(payload: LoginInput, response: Response):
     result = AuthController.login(session, payload, response)
     return result
 

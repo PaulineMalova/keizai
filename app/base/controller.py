@@ -1,6 +1,5 @@
 from fastapi.encoders import jsonable_encoder
 from fastapi import status, HTTPException
-from typing import List
 
 from app.utils import get_or_create
 
@@ -8,6 +7,7 @@ from app.utils import get_or_create
 class BaseController:
     model = None
     schema = None
+    hide_fields = None
 
     @classmethod
     def get_json_compatible_data(cls, item):
@@ -37,10 +37,18 @@ class BaseController:
 
     @classmethod
     def post_record(cls, session, data, response):
-        created, item = get_or_create(session, cls.model, cls.schema, data)
+        schema = cls.schema()
+        created, item = cls.perform_post(session, data, schema)
         if created:
             response.status_code = status.HTTP_201_CREATED
-        return item
+        if isinstance(cls.hide_fields, list):
+            schema = cls.schema(exclude=(field for field in cls.hide_fields))
+        return schema.dump(item)
+
+    @classmethod
+    def perform_post(cls, session, data, schema):
+        created, item = get_or_create(session, cls.model, schema, data)
+        return created, item
 
     @classmethod
     def fetch_records(cls, session, pk=None, response=None):
@@ -48,26 +56,42 @@ class BaseController:
             return cls.fetch_single_record(session, pk, response)
         model = cls.model
         query = session.query(model).filter(model.deleted_at.is_(None))
-        result: List[cls.schema] = query.all()
-        return result
+        result = query.all()
+        schema = cls.schema(many=True)
+        if isinstance(cls.hide_fields, list):
+            schema = cls.schema(exclude=(field for field in cls.hide_fields))
+        return schema.dump(result)
 
     @classmethod
-    def fetch_single_record(cls, session, pk, response):
+    def fetch_object(cls, session, pk):
         item = session.query(cls.model).get(pk)
         if item is None or item.deleted_at is not None:
             raise HTTPException(status_code=404, detail="Record not Found")
         return item
 
     @classmethod
+    def fetch_single_record(cls, session, pk, response):
+        item = cls.fetch_object(session, pk)
+        schema = cls.schema()
+        if isinstance(cls.hide_fields, list):
+            schema = cls.schema(exclude=(field for field in cls.hide_fields))
+        return schema.dump(item)
+
+    @classmethod
     def update_record(cls, session, data, pk, response):
-        item = cls.fetch_single_record(session, pk, response)
+        validation_errors = cls.schema(partial=True).validate(data)
+        if validation_errors:
+            raise HTTPException(status_code=422, detail=validation_errors)
+        item = cls.fetch_object(session, pk)
         item.set_model_dict(data)
         item.save(session)
-        result: cls.schema = item
-        return result
+        schema = cls.schema()
+        if isinstance(cls.hide_fields, list):
+            schema = cls.schema(exclude=(field for field in cls.hide_fields))
+        return schema.dump(item)
 
     @classmethod
     def soft_delete(cls, session, pk, user_id, response):
-        item = cls.fetch_single_record(session, pk, response)
+        item = cls.fetch_object(session, pk)
         item.delete(session, user_id)
         return {"deleted": True}
