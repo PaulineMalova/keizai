@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from sqlalchemy import true
 
 from app.user.models import User, OauthToken
 from app.user.schemas import UserSchema, OauthTokenSchema
@@ -14,6 +15,7 @@ from app.utils import (
 class UserController(BaseController):
     model = User
     schema = UserSchema
+    hide_fields = ["password"]
 
     @classmethod
     def post_record(cls, session, data, response):
@@ -27,6 +29,12 @@ class UserController(BaseController):
         data["password"] = hash_password(password)
 
         return super().post_record(session, data, response)
+
+    @classmethod
+    def update_record(cls, session, data, pk, response):
+        if data.get("password") is not None:
+            data["password"] = hash_password(data["password"])
+        return super().update_record(session, data, pk, response)
 
 
 class OauthTokenController(BaseController):
@@ -53,7 +61,11 @@ class AuthController:
         password = data["password"]
         user = (
             session.query(User)
-            .filter_by(phone_number=phone_number, is_active=True)
+            .filter(
+                User.phone_number == phone_number,
+                User.is_active == true(),
+                User.deleted_at.is_(None),
+            )
             .first()
         )
         if user is None:
@@ -64,7 +76,9 @@ class AuthController:
         user_id = str(user.user_id)
         if verify_password(password, user.password) is True:
             token_data = generate_access_token({"user_id": user_id})
-            result = OauthTokenController.post_record(
-                session, token_data, response
+            _, item = OauthTokenController.perform_post(
+                session, token_data, OauthTokenSchema()
             )
-            return {"access_token": result.access_token, "user_id": user_id}
+            return OauthTokenSchema(only=["access_token", "user_id"]).dump(
+                item
+            )

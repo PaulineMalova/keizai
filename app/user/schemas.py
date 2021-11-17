@@ -1,46 +1,43 @@
-# TODO: Use Marshmallow in place of pydantic
-
-import uuid
-
-from typing import Optional
-from datetime import datetime
-from pydantic import BaseModel
+from marshmallow import fields
 
 from app.base.schema import BaseSchema
 from app.user.models import User, OauthToken
 
 
 class UserSchema(BaseSchema):
-    first_name: str
-    last_name: str
-    user_number: Optional[str]
-    password: str
-    user_name: str
-    phone_number: str
-    email_address: str
+    user_id = fields.UUID(dump_only=True)
+    first_name = fields.Str(
+        required=True, error_messages={"required": "First name is required"}
+    )
+    last_name = fields.Str(
+        required=True, error_messages={"required": "Last name is required"}
+    )
+    user_number = fields.Str(
+        required=True, error_messages={"required": "User number is required"}
+    )
+    password = fields.Str(
+        required=True, error_messages={"required": "Password is required"}
+    )
+    user_name = fields.Str(
+        required=True, error_messages={"required": "User name is required"}
+    )
+    phone_number = fields.Str(
+        required=True, error_messages={"required": "Phone number is required"}
+    )
+    email_address = fields.Str(
+        required=True, error_messages={"required": "Email address is required"}
+    )
 
     class Meta(BaseSchema.Meta):
         model = User
         unique_fields = ["phone_number", "email_address"]
 
 
-class PartialUserSchema(UserSchema):
-    first_name: Optional[str]
-    last_name: Optional[str]
-    user_name: Optional[str]
-    phone_number: Optional[str]
-    email_address: Optional[str]
-
-
 class OauthTokenSchema(BaseSchema):
-    user_id: uuid.UUID
-    access_token: str
-    expires_at: datetime
+    oauth_token_id = fields.UUID(dump_only=True)
+    user_id = fields.UUID(required=True)
+    access_token = fields.Str(required=True)
+    expires_at = fields.DateTime(required=True)
 
     class Meta(BaseSchema.Meta):
         model = OauthToken
-
-
-class LoginSchema(BaseModel):
-    username: str
-    password: str

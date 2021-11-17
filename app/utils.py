@@ -9,7 +9,6 @@ from argon2.exceptions import VerifyMismatchError
 from sqlalchemy.sql.expression import ClauseElement
 from fastapi import HTTPException
 
-from app.exceptions import ValidationFailed
 from app import settings
 
 
@@ -28,6 +27,10 @@ def number_id_generator(
 
 def get_or_create(session, model, schema, data):
     """Get an existing model or create a new one if it does not exist."""
+    validation_errors = schema.validate(data)
+    if validation_errors:
+        raise HTTPException(status_code=422, detail=validation_errors)
+
     kwargs = {}
     unique_fields = schema.Meta.unique_fields
 
@@ -51,28 +54,9 @@ def get_or_create(session, model, schema, data):
     params = dict(
         (k, v) for k, v in data.items() if not isinstance(v, ClauseElement)
     )
-    instance = load_schema(schema, params)
+    instance = schema.load(params)
     instance.save(session)
     return True, instance
-
-
-def load_schema(schema, data, many=None):
-    """Load schema data using model."""
-    # Infer many from the schema class if many is None
-    many = many if many is None else bool(many)
-    if schema.Meta.model is None:
-        raise ValidationFailed(
-            "A schema must define a model attribute under Meta "
-        )
-    if many:
-        if not isinstance(data, list):
-            raise ValidationFailed(
-                "data must be a list of objects if many=True"
-            )
-        # pylint: disable=not-callable
-        return [schema.Meta.model(**item_data) for item_data in data]
-    # pylint: disable=not-callable
-    return schema.Meta.model(**data)
 
 
 def hash_password(password):
@@ -102,7 +86,7 @@ def generate_access_token(payload):
     )
     return {
         "access_token": access_token,
-        "expires_at": expiration_time,
+        "expires_at": str(expiration_time),
         "user_id": payload["user_id"],
         "created_by": "System",
         "updated_by": "System",

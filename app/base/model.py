@@ -15,7 +15,10 @@ class BaseModel:
         DateTime(timezone=True), nullable=False, default=datetime.datetime.now
     )
     updated_at = Column(
-        DateTime(timezone=True), nullable=False, default=datetime.datetime.now
+        DateTime(timezone=True),
+        nullable=False,
+        default=datetime.datetime.now,
+        onupdate=datetime.datetime.now,
     )
     created_by = Column(String, nullable=False)
     updated_by = Column(String, nullable=False)
@@ -43,7 +46,7 @@ class BaseModel:
     def delete(self, session, updated_by):
         """Delete a record from the database."""
         self.deleted_at = datetime.datetime.now()
-        self.active = False
+        self.is_active = False
         self.deleted_by = updated_by
         self.save(session)
 
