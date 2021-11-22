@@ -1,3 +1,5 @@
+import json
+
 from fastapi.encoders import jsonable_encoder
 from fastapi import status, HTTPException
 
@@ -36,14 +38,14 @@ class BaseController:
             return cls.soft_delete(session, pk, user_id, response)
 
     @classmethod
-    def post_record(cls, session, data, response):
+    def post_record(cls, session, data, response=None):
         schema = cls.schema()
         created, item = cls.perform_post(session, data, schema)
-        if created:
+        if created and response is not None:
             response.status_code = status.HTTP_201_CREATED
         if isinstance(cls.hide_fields, list):
             schema = cls.schema(exclude=(field for field in cls.hide_fields))
-        return schema.dump(item)
+        return schema.dumps(item)
 
     @classmethod
     def perform_post(cls, session, data, schema):
@@ -60,7 +62,8 @@ class BaseController:
         schema = cls.schema(many=True)
         if isinstance(cls.hide_fields, list):
             schema = cls.schema(exclude=(field for field in cls.hide_fields))
-        return schema.dump(result)
+
+        return schema.dumps(result)
 
     @classmethod
     def fetch_object(cls, session, pk):
@@ -75,10 +78,10 @@ class BaseController:
         schema = cls.schema()
         if isinstance(cls.hide_fields, list):
             schema = cls.schema(exclude=(field for field in cls.hide_fields))
-        return schema.dump(item)
+        return schema.dumps(item)
 
     @classmethod
-    def update_record(cls, session, data, pk, response):
+    def update_record(cls, session, data, pk, response=None):
         validation_errors = cls.schema(partial=True).validate(data)
         if validation_errors:
             raise HTTPException(status_code=422, detail=validation_errors)
@@ -88,10 +91,10 @@ class BaseController:
         schema = cls.schema()
         if isinstance(cls.hide_fields, list):
             schema = cls.schema(exclude=(field for field in cls.hide_fields))
-        return schema.dump(item)
+        return schema.dumps(item)
 
     @classmethod
-    def soft_delete(cls, session, pk, user_id, response):
+    def soft_delete(cls, session, pk, user_id, response=None):
         item = cls.fetch_object(session, pk)
         item.delete(session, user_id)
-        return {"deleted": True}
+        return json.dumps({"deleted": True})
