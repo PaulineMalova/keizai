@@ -18,7 +18,7 @@ class UserController(BaseController):
     hide_fields = ["password"]
 
     @classmethod
-    def post_record(cls, session, data, response):
+    def post_record(cls, session, data, response=None):
         user_number = data.get("user_number")
         if user_number is None:
             data["user_number"] = number_id_generator(
@@ -31,7 +31,7 @@ class UserController(BaseController):
         return super().post_record(session, data, response)
 
     @classmethod
-    def update_record(cls, session, data, pk, response):
+    def update_record(cls, session, data, pk, response=None):
         if data.get("password") is not None:
             data["password"] = hash_password(data["password"])
         return super().update_record(session, data, pk, response)

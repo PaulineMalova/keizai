@@ -12,9 +12,7 @@ class UserSchema(BaseSchema):
     last_name = fields.Str(
         required=True, error_messages={"required": "Last name is required"}
     )
-    user_number = fields.Str(
-        required=True, error_messages={"required": "User number is required"}
-    )
+    user_number = fields.Str(allow_none=True)
     password = fields.Str(
         required=True, error_messages={"required": "Password is required"}
     )

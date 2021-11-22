@@ -22,3 +22,8 @@ def create_session():
     engine = db_connect()
     create_all_tables(engine)
     return scoped_session(sessionmaker(autoflush=True, bind=engine))
+
+
+def drop_all_tables(engine):
+    """Manually drop all db tables."""
+    Base.metadata.drop_all(engine)
