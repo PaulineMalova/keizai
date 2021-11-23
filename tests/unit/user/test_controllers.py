@@ -7,6 +7,14 @@ from app.user.controllers import UserController
 
 class TestUser:
     @staticmethod
+    def test_can_get_multiple_users(session, create_user):
+        create_user("+254712345689", "newbe@yahoo.com")
+        create_user("+254768901342", "newbie@gmail.com")
+        user = json.loads(UserController.fetch_records(session))
+        if len(user) != 2:
+            raise AssertionError()
+
+    @staticmethod
     def test_can_add_user(session, user):
         result = json.loads(UserController.post_record(session, user))
         if result["user_id"] is None or result.get("password") is not None:
@@ -30,14 +38,6 @@ class TestUser:
             UserController.fetch_records(session, pk=new_user.user_id)
         )
         if user["user_id"] != str(new_user.user_id):
-            raise AssertionError()
-
-    @staticmethod
-    def test_can_get_multiple_users(session, create_user):
-        create_user("+254712345689", "newbe@yahoo.com")
-        create_user("+254768901342", "newbie@gmail.com")
-        user = json.loads(UserController.fetch_records(session))
-        if len(user) != 2:
             raise AssertionError()
 
     @staticmethod
