@@ -61,9 +61,11 @@ class BaseController:
         result = query.all()
         schema = cls.schema(many=True)
         if isinstance(cls.hide_fields, list):
-            schema = cls.schema(exclude=(field for field in cls.hide_fields))
-
-        return schema.dumps(result)
+            schema = cls.schema(
+                exclude=(field for field in cls.hide_fields), many=True
+            )
+        result = schema.dumps(result)
+        return result
 
     @classmethod
     def fetch_object(cls, session, pk):
