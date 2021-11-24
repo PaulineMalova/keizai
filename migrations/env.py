@@ -10,6 +10,7 @@ from logging.config import fileConfig
 
 from app import settings
 from app.user.models import User, OauthToken
+from app.account.models import Account, AccountTransactionCategory, Ledger
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -54,6 +55,10 @@ target_metadata = combine_metadata(
     # user
     User.metadata,
     OauthToken.metadata,
+    # account
+    Account.metadata,
+    AccountTransactionCategory.metadata,
+    Ledger.metadata,
 )
 
 # other values from the config, defined by the needs of env.py,
