@@ -1,5 +1,8 @@
 MINIMUM_CODE_COVERAGE ?=70
 
+install: requirements.txt
+	pip install -r requirements.txt
+
 test:
 	flake8 app
 	coverage run -m pytest tests
