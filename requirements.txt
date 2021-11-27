@@ -11,3 +11,4 @@ marshmallow==3.14.1
 pytest==6.2.5
 coverage==6.1.2
 marshmallow-enum==1.5.1
+pytest-sugar==0.9.4
