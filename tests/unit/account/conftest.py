@@ -82,7 +82,7 @@ def ledger(create_account_transaction_category):
             "transaction_cost": 36,
             "created_by": str(uuid4()),
             "updated_by": str(uuid4()),
-            "new_balance": 200,
+            "source_account": "ACCOUNT",
         }
 
     return _ledger
@@ -105,7 +105,7 @@ def create_ledger(create_account_transaction_category, session):
             transaction_cost=23,
             created_by=str(uuid4()),
             updated_by=str(uuid4()),
-            new_balance=300,
+            source_account="SAVINGS_ACCOUNT"
         )
         session.add(ledger)
         session.commit()

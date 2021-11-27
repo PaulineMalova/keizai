@@ -3,7 +3,7 @@ from marshmallow_enum import EnumField
 
 from app.base.schema import BaseSchema
 from app.account.models import Account, AccountTransactionCategory, Ledger
-from app.enums import TransactionTypeEnum
+from app.enums import TransactionTypeEnum, SourceAccountEnum
 
 
 class AccountSchema(BaseSchema):
@@ -39,6 +39,7 @@ class AccountTransactionCategorySchema(BaseSchema):
 
 
 class LedgerSchema(BaseSchema):
+
     ledger_id = fields.UUID(dump_only=True)
     account_id = fields.UUID(
         required=True, error_messages={"required": "Account id is required"}
@@ -54,7 +55,13 @@ class LedgerSchema(BaseSchema):
         required=True,
         error_messages={"required": "Transaction cost is required"},
     )
-    new_balance = fields.Float()
+    source_account = EnumField(
+        SourceAccountEnum,
+        required=True,
+        error_messages={"required": "Source account is required"},
+    )
+    account = fields.Nested(AccountSchema)
+    transaction_category = fields.Nested(AccountTransactionCategorySchema)
 
     class Meta(BaseSchema.Meta):
         model = Ledger

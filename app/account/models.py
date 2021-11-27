@@ -2,9 +2,10 @@ import uuid
 
 from sqlalchemy import Column, ForeignKey, Float, String, Enum
 from sqlalchemy_utils import UUIDType
+from sqlalchemy.orm import relationship
 
 from app.base.model import Base
-from app.enums import TransactionTypeEnum
+from app.enums import TransactionTypeEnum, SourceAccountEnum
 
 
 class Account(Base):
@@ -76,7 +77,9 @@ class Ledger(Base):
     )
     amount = Column(Float, nullable=False)
     transaction_cost = Column(Float, nullable=False)
-    new_balance = Column(Float, nullable=False)
+    source_account = Column(Enum(SourceAccountEnum), nullable=False)
+    account = relationship("Account", lazy="joined")
+    transaction_category = relationship("AccountTransactionCategory")
 
     def __repr__(self):
         return str(self.ledger_id)

@@ -13,4 +13,5 @@ def session():
     create_all_tables(engine)
     session = sessionmaker(bind=engine)
     yield session()
+    session().close()
     drop_all_tables(engine)

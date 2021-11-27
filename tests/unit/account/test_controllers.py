@@ -7,6 +7,7 @@ from app.account.controllers import (
     AccountTransactionCategoryController,
     LedgerController,
 )
+from app.account.models import Account
 
 
 class TestAccount:
@@ -146,6 +147,182 @@ class TestLedger:
     def test_can_add_ledger(session, ledger):
         result = json.loads(LedgerController.post_record(session, ledger()))
         if result["ledger_id"] is None:
+            raise AssertionError()
+
+    @staticmethod
+    def test_can_update_account_balances_accurately_with_debit_transaction(
+        session, create_account_transaction_category, ledger
+    ):
+        transaction_category = create_account_transaction_category(
+            "Toiletries", "DEBIT"
+        )
+        account = (
+            session.query(Account.account_balance, Account.account_savings)
+            .filter_by(account_id=transaction_category.account_id)
+            .first()
+        )
+        ledger = ledger()
+        ledger[
+            "transaction_category_id"
+        ] = transaction_category.account_transaction_category_id
+        ledger["amount"] = 3500
+        transaction_cost = ledger["transaction_cost"]
+
+        # With the source being user's account
+        ledger["source_account"] = "ACCOUNT"
+        result = json.loads(LedgerController.post_record(session, ledger))
+        if (
+            result["account"]["account_balance"]
+            != (account.account_balance - (3500 + transaction_cost))
+            or result["account"]["account_savings"] != account.account_savings
+        ):
+            raise AssertionError()
+
+        # With the source being user's savings account
+        account = (
+            session.query(Account.account_balance, Account.account_savings)
+            .filter_by(account_id=transaction_category.account_id)
+            .first()
+        )
+        ledger["source_account"] = "SAVINGS_ACCOUNT"
+        result = json.loads(LedgerController.post_record(session, ledger))
+        if (
+            result["account"]["account_savings"]
+            != (account.account_savings - (3500 + transaction_cost))
+            or result["account"]["account_balance"] != account.account_balance
+        ):
+            raise AssertionError()
+
+        # With the source being external (unaccounted for in this case)
+        account = (
+            session.query(Account.account_balance, Account.account_savings)
+            .filter_by(account_id=transaction_category.account_id)
+            .first()
+        )
+        ledger["source_account"] = "EXTERNAL"
+        result = json.loads(LedgerController.post_record(session, ledger))
+        if (
+            result["account"]["account_savings"] != account.account_savings
+            or result["account"]["account_balance"] != account.account_balance
+        ):
+            raise AssertionError()
+
+    @staticmethod
+    def test_can_update_account_balances_accurately_with_credit_transaction(
+        session, create_account_transaction_category, ledger
+    ):
+        transaction_category = create_account_transaction_category(
+            "Investment Interest", "CREDIT"
+        )
+        account = (
+            session.query(Account.account_balance, Account.account_savings)
+            .filter_by(account_id=transaction_category.account_id)
+            .first()
+        )
+        ledger = ledger()
+        ledger[
+            "transaction_category_id"
+        ] = transaction_category.account_transaction_category_id
+        ledger["amount"] = 1000
+
+        # With the source being external
+        ledger["source_account"] = "EXTERNAL"
+        result = json.loads(LedgerController.post_record(session, ledger))
+        if (
+            result["account"]["account_balance"]
+            != (account.account_balance + 1000)
+            or result["account"]["account_savings"] != account.account_savings
+        ):
+            raise AssertionError()
+
+        # With the source being user's savings account
+        account = (
+            session.query(Account.account_balance, Account.account_savings)
+            .filter_by(account_id=transaction_category.account_id)
+            .first()
+        )
+        ledger["source_account"] = "SAVINGS_ACCOUNT"
+        result = json.loads(LedgerController.post_record(session, ledger))
+        if (
+            result["account"]["account_savings"]
+            != (account.account_savings - (1000 + ledger["transaction_cost"]))
+            or result["account"]["account_balance"]
+            != account.account_balance + 1000
+        ):
+            raise AssertionError()
+
+        # With the source being user's account
+        account = (
+            session.query(Account.account_balance, Account.account_savings)
+            .filter_by(account_id=transaction_category.account_id)
+            .first()
+        )
+        ledger["source_account"] = "ACCOUNT"
+        result = json.loads(LedgerController.post_record(session, ledger))
+        if (
+            result["account"]["account_balance"]
+            != (account.account_balance - (ledger["transaction_cost"]))
+            or result["account"]["account_savings"] != account.account_savings
+        ):
+            raise AssertionError()
+
+    @staticmethod
+    def test_can_update_account_balances_accurately_with_savings_transaction(
+        session, create_account_transaction_category, ledger
+    ):
+        transaction_category = create_account_transaction_category(
+            "Sacco Saving", "SAVINGS"
+        )
+        account = (
+            session.query(Account.account_balance, Account.account_savings)
+            .filter_by(account_id=transaction_category.account_id)
+            .first()
+        )
+        ledger = ledger()
+        ledger[
+            "transaction_category_id"
+        ] = transaction_category.account_transaction_category_id
+        ledger["amount"] = 3500
+
+        # With the source being external
+        ledger["source_account"] = "EXTERNAL"
+        result = json.loads(LedgerController.post_record(session, ledger))
+        if (
+            result["account"]["account_balance"] != (account.account_balance)
+            or result["account"]["account_savings"]
+            != account.account_savings + 3500
+        ):
+            raise AssertionError()
+
+        # With the source being user's savings account
+        account = (
+            session.query(Account.account_balance, Account.account_savings)
+            .filter_by(account_id=transaction_category.account_id)
+            .first()
+        )
+        ledger["source_account"] = "SAVINGS_ACCOUNT"
+        result = json.loads(LedgerController.post_record(session, ledger))
+        if (
+            result["account"]["account_savings"]
+            != (account.account_savings - ledger["transaction_cost"])
+            or result["account"]["account_balance"] != account.account_balance
+        ):
+            raise AssertionError()
+
+        # With the source being user's account
+        account = (
+            session.query(Account.account_balance, Account.account_savings)
+            .filter_by(account_id=transaction_category.account_id)
+            .first()
+        )
+        ledger["source_account"] = "ACCOUNT"
+        result = json.loads(LedgerController.post_record(session, ledger))
+        if (
+            result["account"]["account_balance"]
+            != (account.account_balance - (3500 + ledger["transaction_cost"]))
+            or result["account"]["account_savings"]
+            != account.account_savings + 3500
+        ):
             raise AssertionError()
 
     @staticmethod
