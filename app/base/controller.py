@@ -57,7 +57,11 @@ class BaseController:
         if pk is not None:
             return cls.fetch_single_record(session, pk, response)
         model = cls.model
-        query = session.query(model).filter(model.deleted_at.is_(None))
+        query = (
+            session.query(model)
+            .filter(model.deleted_at.is_(None))
+            .order_by(model.updated_at.desc())
+        )
         result = query.all()
         schema = cls.schema(many=True)
         if isinstance(cls.hide_fields, list):
@@ -85,6 +89,7 @@ class BaseController:
     @classmethod
     def update_record(cls, session, data, pk, response=None):
         validation_errors = cls.schema(partial=True).validate(data)
+
         if validation_errors:
             raise HTTPException(status_code=422, detail=validation_errors)
         item = cls.fetch_object(session, pk)
