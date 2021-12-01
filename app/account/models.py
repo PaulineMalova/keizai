@@ -23,7 +23,7 @@ class Account(Base):
     )
     account_balance = Column(Float, nullable=False, default=0)
     account_savings = Column(Float, nullable=False, default=0)
-    # cash_balance = Column(Float, nullable=False, default=0)
+    cash_balance = Column(Float, nullable=False, default=0)
 
     def __repr__(self):
         return str(self.account_id)

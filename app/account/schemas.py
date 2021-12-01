@@ -13,7 +13,7 @@ class AccountSchema(BaseSchema):
     )
     account_balance = fields.Float(allow_nan=True)
     account_savings = fields.Float(allow_nan=True)
-    # cash_balance = fields.Float(allow_nan=True)
+    cash_balance = fields.Float(allow_nan=True)
 
     class Meta(BaseSchema.Meta):
         model = Account
