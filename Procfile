@@ -1,2 +1,2 @@
-chmod +x run.sh
-web: ./run.sh
+release: alembic upgrade head
+web: uvicorn app.main:app
