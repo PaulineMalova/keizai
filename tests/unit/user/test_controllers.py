@@ -10,8 +10,8 @@ class TestUser:
     def test_can_get_multiple_users(session, create_user):
         create_user("+254712345689", "newbe@yahoo.com")
         create_user("+254768901342", "newbie@gmail.com")
-        user = json.loads(UserController.fetch_records(session))
-        if len(user) != 2:
+        users = json.loads(UserController.fetch_records(session))
+        if len(users) != 2:
             raise AssertionError()
 
     @staticmethod

@@ -22,7 +22,7 @@ class UserSchema(BaseSchema):
     phone_number = fields.Str(
         required=True, error_messages={"required": "Phone number is required"}
     )
-    email_address = fields.Str(
+    email_address = fields.Email(
         required=True, error_messages={"required": "Email address is required"}
     )
 
