@@ -1,5 +1,3 @@
-import json
-
 from app.base.controller import BaseController
 from app.account.models import Account, AccountTransactionCategory, Ledger
 from app.account.schemas import (
@@ -43,6 +41,7 @@ def update_account_balance(session, data):
     account = session.query(Account).get(account_id)
     account_balance = account.account_balance
     account_savings = account.account_savings
+    cash_balance = account.cash_balance
     transaction_category = session.query(AccountTransactionCategory).get(
         transaction_category_id
     )
@@ -54,30 +53,46 @@ def update_account_balance(session, data):
         elif source_account == "ACCOUNT":
             total_deduction = amount + transaction_cost
             account_balance -= total_deduction
+        elif source_account == "CASH":
+            total_deduction = amount + transaction_cost
+            cash_balance -= total_deduction
+
     elif transaction_type == TransactionTypeEnum.DEBIT:
         total_deduction = amount + transaction_cost
         if source_account == "ACCOUNT":
             account_balance -= total_deduction
         elif source_account == "SAVINGS_ACCOUNT":
             account_savings -= total_deduction
-    elif transaction_type == TransactionTypeEnum.CREDIT:
+        elif source_account == "CASH":
+            cash_balance -= total_deduction
+
+    elif transaction_type == TransactionTypeEnum.ACCOUNT_CREDIT:
         account_balance += amount
         if source_account == "SAVINGS_ACCOUNT":
             account_savings -= amount + transaction_cost
-        if source_account == "ACCOUNT":
+        elif source_account == "ACCOUNT":
             account_balance -= transaction_cost + amount
+        elif source_account == "CASH":
+            cash_balance -= transaction_cost + amount
+
+    elif transaction_type == TransactionTypeEnum.CASH_CREDIT:
+        cash_balance += amount
+        if source_account == "SAVINGS_ACCOUNT":
+            account_savings -= amount + transaction_cost
+        elif source_account == "ACCOUNT":
+            account_balance -= transaction_cost + amount
+        elif source_account == "CASH":
+            cash_balance -= transaction_cost + amount
+
     balance_update_payload = {
         "account_balance": account_balance,
         "account_savings": account_savings,
+        "cash_balance": cash_balance,
         "updated_by": "System",
     }
-    response = json.loads(
-        AccountController.update_record(
-            session, balance_update_payload, account_id
-        )
+
+    AccountController.update_record(
+        session, balance_update_payload, account_id
     )
-    if (
-        response["account_balance"] == account_balance
-        and response["account_savings"] == account_savings
-    ):
-        return {"success": True}
+
+    return {"success": True}

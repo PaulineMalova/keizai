@@ -157,7 +157,11 @@ class TestLedger:
             "Toiletries", "DEBIT"
         )
         account = (
-            session.query(Account.account_balance, Account.account_savings)
+            session.query(
+                Account.account_balance,
+                Account.account_savings,
+                Account.cash_balance,
+            )
             .filter_by(account_id=transaction_category.account_id)
             .first()
         )
@@ -175,12 +179,17 @@ class TestLedger:
             result["account"]["account_balance"]
             != (account.account_balance - (3500 + transaction_cost))
             or result["account"]["account_savings"] != account.account_savings
+            or result["account"]["cash_balance"] != account.cash_balance
         ):
             raise AssertionError()
 
         # With the source being user's savings account
         account = (
-            session.query(Account.account_balance, Account.account_savings)
+            session.query(
+                Account.account_balance,
+                Account.account_savings,
+                Account.cash_balance,
+            )
             .filter_by(account_id=transaction_category.account_id)
             .first()
         )
@@ -190,12 +199,17 @@ class TestLedger:
             result["account"]["account_savings"]
             != (account.account_savings - (3500 + transaction_cost))
             or result["account"]["account_balance"] != account.account_balance
+            or result["account"]["cash_balance"] != account.cash_balance
         ):
             raise AssertionError()
 
         # With the source being external (unaccounted for in this case)
         account = (
-            session.query(Account.account_balance, Account.account_savings)
+            session.query(
+                Account.account_balance,
+                Account.account_savings,
+                Account.cash_balance,
+            )
             .filter_by(account_id=transaction_category.account_id)
             .first()
         )
@@ -203,6 +217,27 @@ class TestLedger:
         result = json.loads(LedgerController.post_record(session, ledger))
         if (
             result["account"]["account_savings"] != account.account_savings
+            or result["account"]["account_balance"] != account.account_balance
+            or result["account"]["cash_balance"] != account.cash_balance
+        ):
+            raise AssertionError()
+
+        # With the source being user's cash
+        account = (
+            session.query(
+                Account.account_balance,
+                Account.account_savings,
+                Account.cash_balance,
+            )
+            .filter_by(account_id=transaction_category.account_id)
+            .first()
+        )
+        ledger["source_account"] = "CASH"
+        result = json.loads(LedgerController.post_record(session, ledger))
+        if (
+            result["account"]["cash_balance"]
+            != (account.cash_balance - (3500 + transaction_cost))
+            or result["account"]["account_savings"] != account.account_savings
             or result["account"]["account_balance"] != account.account_balance
         ):
             raise AssertionError()
@@ -212,10 +247,14 @@ class TestLedger:
         session, create_account_transaction_category, ledger
     ):
         transaction_category = create_account_transaction_category(
-            "Investment Interest", "CREDIT"
+            "Investment Interest", "ACCOUNT_CREDIT"
         )
         account = (
-            session.query(Account.account_balance, Account.account_savings)
+            session.query(
+                Account.account_balance,
+                Account.account_savings,
+                Account.cash_balance,
+            )
             .filter_by(account_id=transaction_category.account_id)
             .first()
         )
@@ -232,12 +271,17 @@ class TestLedger:
             result["account"]["account_balance"]
             != (account.account_balance + 1000)
             or result["account"]["account_savings"] != account.account_savings
+            or result["account"]["cash_balance"] != account.cash_balance
         ):
             raise AssertionError()
 
         # With the source being user's savings account
         account = (
-            session.query(Account.account_balance, Account.account_savings)
+            session.query(
+                Account.account_balance,
+                Account.account_savings,
+                Account.cash_balance,
+            )
             .filter_by(account_id=transaction_category.account_id)
             .first()
         )
@@ -248,12 +292,17 @@ class TestLedger:
             != (account.account_savings - (1000 + ledger["transaction_cost"]))
             or result["account"]["account_balance"]
             != account.account_balance + 1000
+            or result["account"]["cash_balance"] != account.cash_balance
         ):
             raise AssertionError()
 
         # With the source being user's account
         account = (
-            session.query(Account.account_balance, Account.account_savings)
+            session.query(
+                Account.account_balance,
+                Account.account_savings,
+                Account.cash_balance,
+            )
             .filter_by(account_id=transaction_category.account_id)
             .first()
         )
@@ -263,6 +312,28 @@ class TestLedger:
             result["account"]["account_balance"]
             != (account.account_balance - (ledger["transaction_cost"]))
             or result["account"]["account_savings"] != account.account_savings
+            or result["account"]["cash_balance"] != account.cash_balance
+        ):
+            raise AssertionError()
+
+        # With the source being user's cash
+        account = (
+            session.query(
+                Account.account_balance,
+                Account.account_savings,
+                Account.cash_balance,
+            )
+            .filter_by(account_id=transaction_category.account_id)
+            .first()
+        )
+        ledger["source_account"] = "CASH"
+        result = json.loads(LedgerController.post_record(session, ledger))
+        if (
+            result["account"]["cash_balance"]
+            != (account.cash_balance - (1000 + ledger["transaction_cost"]))
+            or result["account"]["account_savings"] != account.account_savings
+            or result["account"]["account_balance"]
+            != account.account_balance + 1000
         ):
             raise AssertionError()
 
@@ -274,7 +345,11 @@ class TestLedger:
             "Sacco Saving", "SAVINGS"
         )
         account = (
-            session.query(Account.account_balance, Account.account_savings)
+            session.query(
+                Account.account_balance,
+                Account.account_savings,
+                Account.cash_balance,
+            )
             .filter_by(account_id=transaction_category.account_id)
             .first()
         )
@@ -291,12 +366,17 @@ class TestLedger:
             result["account"]["account_balance"] != (account.account_balance)
             or result["account"]["account_savings"]
             != account.account_savings + 3500
+            or result["account"]["cash_balance"] != account.cash_balance
         ):
             raise AssertionError()
 
         # With the source being user's savings account
         account = (
-            session.query(Account.account_balance, Account.account_savings)
+            session.query(
+                Account.account_balance,
+                Account.account_savings,
+                Account.cash_balance,
+            )
             .filter_by(account_id=transaction_category.account_id)
             .first()
         )
@@ -306,12 +386,17 @@ class TestLedger:
             result["account"]["account_savings"]
             != (account.account_savings - ledger["transaction_cost"])
             or result["account"]["account_balance"] != account.account_balance
+            or result["account"]["cash_balance"] != account.cash_balance
         ):
             raise AssertionError()
 
         # With the source being user's account
         account = (
-            session.query(Account.account_balance, Account.account_savings)
+            session.query(
+                Account.account_balance,
+                Account.account_savings,
+                Account.cash_balance,
+            )
             .filter_by(account_id=transaction_category.account_id)
             .first()
         )
@@ -322,6 +407,120 @@ class TestLedger:
             != (account.account_balance - (3500 + ledger["transaction_cost"]))
             or result["account"]["account_savings"]
             != account.account_savings + 3500
+            or result["account"]["cash_balance"] != account.cash_balance
+        ):
+            raise AssertionError()
+
+        # With the source being user's cash
+        account = (
+            session.query(
+                Account.account_balance,
+                Account.account_savings,
+                Account.cash_balance,
+            )
+            .filter_by(account_id=transaction_category.account_id)
+            .first()
+        )
+        ledger["source_account"] = "CASH"
+        result = json.loads(LedgerController.post_record(session, ledger))
+        if (
+            result["account"]["cash_balance"]
+            != (account.cash_balance - (3500 + ledger["transaction_cost"]))
+            or result["account"]["account_savings"]
+            != account.account_savings + 3500
+            or result["account"]["account_balance"] != account.account_balance
+        ):
+            raise AssertionError()
+
+    @staticmethod
+    def test_can_update_account_balances_with_cash_credit_transaction(
+        session, create_account_transaction_category, ledger
+    ):
+        transaction_category = create_account_transaction_category(
+            "Mpesa Withdrawal", "CASH_CREDIT"
+        )
+        account = (
+            session.query(
+                Account.account_balance,
+                Account.account_savings,
+                Account.cash_balance,
+            )
+            .filter_by(account_id=transaction_category.account_id)
+            .first()
+        )
+        ledger = ledger()
+        ledger[
+            "transaction_category_id"
+        ] = transaction_category.account_transaction_category_id
+        ledger["amount"] = 5000
+
+        # With the source being external
+        ledger["source_account"] = "EXTERNAL"
+        result = json.loads(LedgerController.post_record(session, ledger))
+        if (
+            result["account"]["account_balance"] != (account.account_balance)
+            or result["account"]["account_savings"] != account.account_savings
+            or result["account"]["cash_balance"] != account.cash_balance + 5000
+        ):
+            raise AssertionError()
+
+        # With the source being user's savings account
+        account = (
+            session.query(
+                Account.account_balance,
+                Account.account_savings,
+                Account.cash_balance,
+            )
+            .filter_by(account_id=transaction_category.account_id)
+            .first()
+        )
+        ledger["source_account"] = "SAVINGS_ACCOUNT"
+        result = json.loads(LedgerController.post_record(session, ledger))
+        if (
+            result["account"]["account_savings"]
+            != (account.account_savings - (ledger["transaction_cost"] + 5000))
+            or result["account"]["account_balance"] != account.account_balance
+            or result["account"]["cash_balance"] != account.cash_balance + 5000
+        ):
+            raise AssertionError()
+
+        # With the source being user's account
+        account = (
+            session.query(
+                Account.account_balance,
+                Account.account_savings,
+                Account.cash_balance,
+            )
+            .filter_by(account_id=transaction_category.account_id)
+            .first()
+        )
+        ledger["source_account"] = "ACCOUNT"
+        result = json.loads(LedgerController.post_record(session, ledger))
+        if (
+            result["account"]["account_balance"]
+            != (account.account_balance - (5000 + ledger["transaction_cost"]))
+            or result["account"]["account_savings"] != account.account_savings
+            or result["account"]["cash_balance"] != account.cash_balance + 5000
+        ):
+            raise AssertionError()
+
+        # With the source being user's cash
+        account = (
+            session.query(
+                Account.account_balance,
+                Account.account_savings,
+                Account.cash_balance,
+            )
+            .filter_by(account_id=transaction_category.account_id)
+            .first()
+        )
+        ledger["source_account"] = "CASH"
+        result = json.loads(LedgerController.post_record(session, ledger))
+        if (
+            result["account"]["cash_balance"]
+            != (account.cash_balance - ledger["transaction_cost"])
+            or result["account"]["account_savings"] != account.account_savings
+            or result["account"]["account_balance"] != account.account_balance
         ):
             raise AssertionError()
 
