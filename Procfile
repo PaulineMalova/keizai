@@ -1,2 +1,2 @@
 release: alembic upgrade head
-web: uvicorn app.main:app
+worker: uvicorn app.main:app
