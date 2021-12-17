@@ -14,6 +14,7 @@ from app.account.input import (
     AccountTransactionCategoryInput,
     LedgerInput,
 )
+from app.auth import authorize
 
 
 session: Session = create_session()
@@ -50,6 +51,7 @@ def get_account(request: Request, account_id: uuid.UUID, response: Response):
 
 
 @router.delete("/accounts/{account_id}")
+@authorize
 def delete_account(request: Request, account_id: str, response: Response):
     result = AccountController.as_view(
         session, request, pk=account_id, response=response
@@ -69,6 +71,7 @@ def get_account_transaction_categories(request: Request):
 
 
 @router.post("/account-transaction-categories")
+@authorize
 def create_account_transaction_category(
     account_transaction_category: AccountTransactionCategoryInput,
     request: Request,
@@ -97,6 +100,7 @@ def get_account_transaction_category(
 @router.put(
     "/account-transaction-categories/{account_transaction_category_id}"
 )
+@authorize
 def update_account_transaction_category(
     account_transaction_category: AccountTransactionCategoryInput,
     request: Request,
@@ -116,6 +120,7 @@ def update_account_transaction_category(
 @router.delete(
     "/account-transaction-categories/{account_transaction_category_id}"
 )
+@authorize
 def delete_account_transaction_category(
     request: Request, account_transaction_category_id: str, response: Response
 ):
@@ -137,6 +142,7 @@ def get_transactions(request: Request):
 
 
 @router.post("/transactions")
+@authorize
 def create_transaction(
     ledger: LedgerInput, request: Request, response: Response
 ):
