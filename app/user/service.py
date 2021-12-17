@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from app.database import create_session
 
 from app.user.controllers import UserController, AuthController
-from app.user.input import PartialUserInput, LoginInput
+from app.user.input import PartialUserInput, LoginInput, ResetPasswordInput
+from app.auth import authorize
 
 session: Session = create_session()
 
@@ -14,6 +15,7 @@ router = APIRouter(tags=["users"])
 
 
 @router.get("/users")
+@authorize
 def get_users(request: Request):
     result = UserController.as_view(session, request)
     return result
@@ -28,6 +30,7 @@ def create_user(user: PartialUserInput, request: Request, response: Response):
 
 
 @router.get("/users/{user_id}")
+@authorize
 def get_user(request: Request, user_id: uuid.UUID, response: Response):
     result = UserController.as_view(
         session, request, pk=user_id, response=response
@@ -37,7 +40,10 @@ def get_user(request: Request, user_id: uuid.UUID, response: Response):
 
 @router.put("/users/{user_id}")
 def update_user(
-    user: PartialUserInput, request: Request, user_id: str, response: Response
+    user: PartialUserInput,
+    request: Request,
+    user_id: uuid.UUID,
+    response: Response,
 ):
     result = UserController.as_view(
         session, request, user, pk=user_id, response=response
@@ -46,7 +52,7 @@ def update_user(
 
 
 @router.delete("/users/{user_id}")
-def delete_user(request: Request, user_id: str, response: Response):
+def delete_user(request: Request, user_id: uuid.UUID, response: Response):
     result = UserController.as_view(
         session, request, pk=user_id, response=response
     )
@@ -59,4 +65,14 @@ def login(payload: LoginInput, response: Response):
     return result
 
 
-# TODO: Exclude password from response
+@router.delete("/logout/{user_id}")
+@authorize
+def logout(request: Request, user_id: uuid.UUID):
+    result = AuthController.logout(session, user_id, request)
+    return result
+
+
+@router.post("/reset-password")
+def reset_password(payload: ResetPasswordInput):
+    result = AuthController.reset_password(session, payload)
+    return result
