@@ -1,4 +1,5 @@
 from typing import Optional
+from pydantic import BaseModel
 
 from app.base.input import BaseInput
 
@@ -13,6 +14,13 @@ class PartialUserInput(BaseInput):
     email_address: Optional[str]
 
 
-class LoginInput(BaseInput):
+class LoginInput(BaseModel):
     username: str
     password: str
+
+
+class ResetPasswordInput(BaseModel):
+    phone_number: str
+    email_address: str
+    new_password: str
+    confirm_password: str
