@@ -107,3 +107,11 @@ def decode_jwt_token(token):
         raise HTTPException(
             status_code=401, detail="Invalid access token. Please log in again"
         )
+
+
+def format_phone_number(phone_number: str):
+    if phone_number.startswith("+"):
+        return phone_number
+    elif phone_number.startswith("0"):
+        phone_number = phone_number[1:]
+    return f"+254{phone_number}"
